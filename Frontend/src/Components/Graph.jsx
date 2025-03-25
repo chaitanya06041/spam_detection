@@ -21,6 +21,7 @@ function Graph() {
   const [data, setData] = useState([]);
   const [emailData, setEmailData] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
     setIsLoaded(false);
@@ -34,6 +35,7 @@ function Graph() {
         let notSpamCount = 0;
         let workCount = 0;
         let personalCount = 0;
+        let cnt = 0;
 
         messages.forEach((message) => {
           if (message.label.toLowerCase() === "spam") {
@@ -48,6 +50,7 @@ function Graph() {
           if (message.category.toLowerCase() === "work") {
             workCount++;
           }
+          cnt++;
         });
 
         // Set data for the pie chart
@@ -60,6 +63,9 @@ function Graph() {
           { name: "work", value: workCount },
         ]);
         setIsLoaded(true);
+        setCount(cnt);
+        console.log("data"+ data);
+        
       })
       .catch((error) => console.error("Error fetching history:", error));
   }, []);
@@ -71,7 +77,7 @@ function Graph() {
   return (
     <div className="graph">
       <h2>Spam vs Not Spam Messages</h2>
-      {isLoaded && data.length > 0 ? (
+      {isLoaded && count > 0 ? (
         <div className="all_graphs">
           <div className="row">
             <PieChart width={400} height={400}>

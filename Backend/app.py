@@ -20,29 +20,36 @@ CORS(app)
 ps = PorterStemmer()
 
 # Define path to the React `data.csv`
-CSV_PATH = "../spam_react/src/Data/data.csv"
+CSV_PATH = "../Frontend/src/Data/data.csv"
 USER_DATA_CSV = "userdata.csv"
-# Load models
+
+#Google Gemini API KEY
+genai.configure(api_key="AIzaSyBySipMuOdjgds4WqrYyGCv65afZYMH0xg")
+
+# Load Trained Naive Bayes models
 vectorizer = pickle.load(open("./models/vectorizer.pkl", "rb"))
 model = pickle.load(open("./models/model.pkl", "rb"))
 
-# genai.configure(api_key="AIzaSyBySipMuOdjgds4WqrYyGCv65afZYMH0xg")
 
+#Fetch Twilio account details from .env
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_WHATSAPP_NUMBER = os.getenv("TWILIO_WHATSAPP_NUMBER")
 TO_WHATSAPP_NUMBER = os.getenv("TO_WHATSAPP_NUMBER")
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
-def send_whatsapp_message(message):
+#Function to send whatsapp message through Twilio
+def send_whatsapp_message(msg):
     client.messages.create(
-        body=message,
         from_=TWILIO_WHATSAPP_NUMBER,
+        body=msg,
         to=TO_WHATSAPP_NUMBER
     )
     print("Whatsapp message sent to ")
     print(TO_WHATSAPP_NUMBER)
 
+
+#Function to format response from gemini to required JSON format
 def format_response(res):
     res = res.replace("```json", "").replace("```", "").strip()
     response_dict = json.loads(res)
@@ -53,6 +60,8 @@ def format_response(res):
             "category": response_dict.get("category", "N/A")
         }
 
+
+# Function to get response from Gemini
 def analyze_text(text):
   prompt = f"""
     Analyze the following message for spam detection:
@@ -67,26 +76,14 @@ def analyze_text(text):
   response = model.generate_content(prompt)
   return format_response(response.text)
 
-
-def check_for_common_in_spam(text):
-    df = pd.read_csv('./common_words.csv')
-    word_set = set(df['Word'].astype(str))
-    set_to_return = set([])
-    text = transform_text(text).split(" ")
-    for word in text:
-        if word in word_set:
-            set_to_return.add(word)
-    return list(set_to_return)
-
-
-
+# Function to Preprocess Message text
 def transform_text(text):
-    text = text.lower()
-    text = nltk.word_tokenize(text)
+    text = text.lower()   #Convert text to lowercase
+    text = nltk.word_tokenize(text)    #Word Tokenization
     
-    y = [i for i in text if i.isalnum()]
-    y = [i for i in y if i not in stopwords.words('english') and i not in string.punctuation]
-    y = [ps.stem(i) for i in y]
+    y = [i for i in text if i.isalnum()]    #Symbols will be removed from text
+    y = [i for i in y if i not in stopwords.words('english') and i not in string.punctuation]    #Stopwords will be removed
+    y = [ps.stem(i) for i in y]     #Stemming
     
     return " ".join(y)
 
@@ -104,52 +101,59 @@ def save_to_csv(text, label, category):
         new_data.to_csv(CSV_PATH, index=False)
 
 
+
+# Route for spam detection
 @app.route("/predict", methods=["POST"])
 def predict():
-    print("Requested Spam")
     data = request.json
     text = data["text"]
-    transformed_text = transform_text(text)
+    transformed_text = transform_text(text)    #Preprocess Text Ex. Tokenization, Removal of Stop Words, Stemming
     vectorized_text = vectorizer.transform([transformed_text]).toarray()
-    prediction = model.predict(vectorized_text)
+    prediction = model.predict(vectorized_text)   #Naive Bayes Model Prediction
     
     label = "spam" if prediction[0] == 1 else "not spam"
-    # Save message and label to CSV
-    spam_status = "🚨 Spam Detected!" if prediction[0] == 1 else "✅ Not Spam"
 
     gemini_response = analyze_text(transformed_text)
-    print(gemini_response)
     category = gemini_response["category"]
     if not category or category == 'N/A':
         category = "None"
-    print("category is: ", category)
-    save_to_csv(text, label, category)
+
+    # create a message to send on Whatsapp
+    response_message = ""
+    if gemini_response['classification'] == 'Spam':
+        response_message = f"{text}\n🚨 Spam Detected!\nSuggestion: {gemini_response['suggestion']}"
+    else:
+        response_message = f"{text}\n✅ Not Spam\nMessage Category: {gemini_response['category']}" 
+
     # Send WhatsApp message
-    # send_whatsapp_message(f"Message: {text}\nStatus: {spam_status}")
+    # send_whatsapp_message(response_message)
+    
+    # Save message and label to CSV
+    save_to_csv(text, label, category)
+
+    #send the response to frontend
     if (label == 'spam'):
         return jsonify({
             "naive" : {
-            "spam": bool(prediction[0] == 1),
-            "words": check_for_common_in_spam(text)
+                "spam": bool(prediction[0] == 1),
             }, 
-                "gemini" : gemini_response
-            })  # ✅ Convert NumPy bool_ to Python bool
+            "gemini" : gemini_response
+            }) 
     else:
         return jsonify({
             "naive" : {
-            "spam": bool(prediction[0] == 1),
-            "words": []
+                "spam": bool(prediction[0] == 1),
             }, 
-                "gemini" : gemini_response
-            })  # ✅ Convert NumPy bool_ to Python bool
+            "gemini" : gemini_response
+            }) 
 
 
+#Route to fetch Emails 
 @app.route('/fetch-email', methods=["POST"])
 def fetch_email():
-    num_emails = 5
-    print("fetching emails")
-    user = "spam.detection.viit@gmail.com"
-    password = "hmsfwdibjfdchvik"
+    num_emails = 5    #Latest 5 emails will be fetched
+    user = "spam.detection.viit@gmail.com"   #User mail id
+    password = "hmsfwdibjfdchvik"     #Google App Password
     imap_url = 'imap.gmail.com'
     my_mail = imaplib.IMAP4_SSL(imap_url)
     my_mail.login(user, password)
@@ -194,26 +198,30 @@ def fetch_email():
 
 
 
-
+# Route to get history of previously predicted mails
 @app.route("/history", methods=["GET"])
 def get_history():
     try:
-        df = pd.read_csv(CSV_PATH)  # Ensure the correct path
-        return jsonify(df.to_dict(orient="records"))  # Convert to JSON format
+        df = pd.read_csv(CSV_PATH)   # Read CSV File
+        return jsonify(df.to_dict(orient="records"))  # Convert Dataframe to JSON format
     except Exception as e:
         print("Error getting file")
         return jsonify({"error": str(e)}), 500
 
+
+#Route to get data history of previously predicted mails
 @app.route("/graphs", methods=["GET"])
 def get_graphs():
     try:
-        df = pd.read_csv(CSV_PATH)  # Ensure the correct path
-        filtered_df = df[['label', 'category']]
-        return jsonify(filtered_df.to_dict(orient="records"))  # Convert to JSON format
+        df = pd.read_csv(CSV_PATH)  # Read CSV file
+        filtered_df = df[['label', 'category']]   # Select only two columns label and category as message is not necessary for graphs
+        return jsonify(filtered_df.to_dict(orient="records"))  # Convert Dataframe to JSON format
     except Exception as e:
         print("Error getting file")
         return jsonify({"error": str(e)}), 500
     
+
+# Route to clear previous history
 @app.route("/clear-history", methods=["DELETE"])
 def clear_history():
     if os.path.exists(CSV_PATH):
@@ -221,6 +229,7 @@ def clear_history():
             file.write("message,label,category\n")  # Clear the file contents
     return jsonify({"message": "History cleared successfully"}), 200
     
+
 
 @app.route('/signup', methods=["POST"])
 def signup():

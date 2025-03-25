@@ -102,7 +102,7 @@ function SpamGemini() {
               </Stack>
             </div>
           )}
-          
+
           <div className="outputs">
             {predictClicked && (
               <div className="loading">
@@ -117,12 +117,31 @@ function SpamGemini() {
             {predictionLoaded && (
               <>
                 <div className="naive_output op">
-                  <p>Naive Bayes Output</p>
-                  <p>Email is {outPut.naive.spam ? "Spam" : "Not Spam"}</p>
+                  <h3>Naive Bayes Output</h3>
+                  <p>
+                    Email is
+                    <span
+                      style={{
+                        color: outPut.naive.spam ? "#fa0202" : "#0aad51", fontWeight: 600
+                      }}
+                    >
+                      {outPut.naive.spam ? " Spam" : " Not Spam"}
+                    </span>
+                  </p>
                 </div>
                 <div className="gemini_output op">
-                  <p>Gemini Output</p>
-                  <p>Email is {outPut.gemini.classification}</p>
+                  <h3>Gemini Output</h3>
+                  <p>
+                    Email is
+                    <span
+                      style={{
+                        color:
+                          outPut.gemini.classification === "Spam" ? "#fa0202" : "#0aad51", fontWeight: 600,
+                      }}
+                    >
+                      {" " + outPut.gemini.classification}
+                    </span>
+                  </p>
                   {outPut.gemini.classification === "Not Spam" && (
                     <p>Email Category: {outPut.gemini.category}</p>
                   )}
