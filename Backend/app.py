@@ -26,7 +26,7 @@ USER_DATA_CSV = "userdata.csv"
 vectorizer = pickle.load(open("./models/vectorizer.pkl", "rb"))
 model = pickle.load(open("./models/model.pkl", "rb"))
 
-genai.configure(api_key="AIzaSyBySipMuOdjgds4WqrYyGCv65afZYMH0xg")
+# genai.configure(api_key="AIzaSyBySipMuOdjgds4WqrYyGCv65afZYMH0xg")
 
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
