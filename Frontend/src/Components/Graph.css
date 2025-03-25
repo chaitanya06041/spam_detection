@@ -1,0 +1,62 @@
+  
+  .graph {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(to right, #ff9a9e, #fad0c4);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    text-align: center;
+    position: relative;
+  }
+  
+  .graph .all_graphs{
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    flex-direction: column;
+  }
+
+  .graph .all_graphs .row {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+  }
+
+  .graph h2 {
+    color: #333;
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .recharts-wrapper {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .graph p {
+    font-size: 18px;
+    color: #333;
+  }
+  
+
+  @media (max-width: 880px){
+    .all_graphs{
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      gap: 50px;
+    }
+
+    .graph .all_graphs .row {
+      flex-direction: column;
+    }
+
+
+  }

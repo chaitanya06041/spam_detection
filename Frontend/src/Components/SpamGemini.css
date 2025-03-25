@@ -1,0 +1,94 @@
+.spam_container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 10px;
+    background-color: #f6f5f7;
+}
+
+.spam_container .fetch_btn {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.spam_container .response {
+    margin-top: 30px;
+    margin-left: 100px;
+    margin-right: 100px;
+}
+
+.spam_container .response .emails_data {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+}
+
+.spam_container .response .emails_data .msgbox_container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.spam_container .response .emails_data .msgbox_container input{
+    width: 20px;
+}
+
+.spam_container .response .emails_data .message_container {
+    padding: 20px;
+    border: 2px solid black;
+    border-radius: 15px;
+    background-color: rgb(251, 251, 236);
+    width: 100%;
+}
+
+.spam_container .loading {
+    height: 250px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.spam_container .response .predict_btn {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.spam_container .response .outputs {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 100px;
+}
+.spam_container .response .outputs .op{
+    border: 2px solid black;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    width: 25%;
+    height: 100%;
+    gap: 20px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    background-color: white;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+}
+.spam_container .response .outputs .op p{
+    margin: 0;
+    text-align: center;
+}
+.spam_container .response .outputs .op ul{
+    margin: 0;
+    text-align: left;
+}
+
+.spam_container .response .outputs .naive_output p {
+
+}
