@@ -14,6 +14,7 @@ import email
 import json
 import google.generativeai as genai
 import csv
+import re
 
 app = Flask(__name__)
 CORS(app)
@@ -151,7 +152,16 @@ def predict():
 #Route to fetch Emails 
 @app.route('/fetch-email', methods=["POST"])
 def fetch_email():
-    num_emails = 5    #Latest 5 emails will be fetched
+    existing_email_bodies = set()  #Create a new empty hashset
+    try:
+        df = pd.read_csv(CSV_PATH)   # Read the csv file for history
+        existing_email_bodies = set(df['message'].dropna().tolist())    #Add emails to set if not message is not empty
+    except FileNotFoundError:
+        existing_email_bodies = set()   # if file not found keep set as empty
+
+
+    num_emails_to_check = 20    # Fetch 20 emails first
+    max_emails = 5    # Maximum number of emails to return
     user = "spam.detection.viit@gmail.com"   #User mail id
     password = "hmsfwdibjfdchvik"     #Google App Password
     imap_url = 'imap.gmail.com'
@@ -163,37 +173,46 @@ def fetch_email():
     _, data = my_mail.search(None, "ALL")
     mail_id_list = data[0].split()
 
-    # Get the latest `num_emails`
-    latest_mails = mail_id_list[-num_emails:]
+    # Get the latest emails (20)
+    latest_mails = reversed(mail_id_list[-num_emails_to_check:])
 
     emails_data = []  # List to store email details
 
     # Fetch emails
     for num in latest_mails:
+        if len(emails_data) >= max_emails:  # Stop once we have 5 unique emails
+            break
+            
         _, data = my_mail.fetch(num, '(RFC822)')
         for response_part in data:
             if isinstance(response_part, tuple):
                 my_msg = email.message_from_bytes(response_part[1])
 
-                # Extract subject, sender, and body
-                email_info = {
-                    "subject": my_msg["subject"],
-                    "from": my_msg["from"],
-                    "body": ""
-                }
-
                 # Extract email body
+                body = ""
                 for part in my_msg.walk():
                     if part.get_content_type() == "text/plain":
-                        email_info["body"] = part.get_payload(decode=True).decode('utf-8', errors="ignore")
+                        body = part.get_payload(decode=True).decode('utf-8', errors="ignore")
+                        break
+                
+                # Check if this email body is already in our CSV
+                if body and body not in existing_email_bodies:
+                    email_info = {
+                        "subject": my_msg["subject"] or "",
+                        "from": my_msg["from"] or "",
+                        "body": body
+                    }
 
-                emails_data.append(email_info)
+                    emails_data.append(email_info)
+                    
+                    # No need to continue processing this email once we've added it
+                    break
 
     # Logout and close connection
     my_mail.logout()
 
-    # Return JSON
-    return json.dumps(emails_data, indent=4)  # Pretty-print JSON
+    # Return JSON with up to 5 unique emails
+    return json.dumps(emails_data, indent=4)    # Pretty-print JSON
 
 
 
