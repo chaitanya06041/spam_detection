@@ -14,15 +14,13 @@ import email
 import json
 import google.generativeai as genai
 import csv
-import re
 
 app = Flask(__name__)
 CORS(app)
 ps = PorterStemmer()
 
-# Define path to the React `data.csv`
+# Define path to the React data.csv
 CSV_PATH = "../Frontend/src/Data/data.csv"
-USER_DATA_CSV = "userdata.csv"
 
 #Google Gemini API KEY
 genai.configure(api_key="AIzaSyBySipMuOdjgds4WqrYyGCv65afZYMH0xg")
@@ -119,10 +117,10 @@ def predict():
     
     label = "spam" if prediction[0] == 1 else "not spam"
 
-    gemini_response = analyze_text(transformed_text)
+    gemini_response = analyze_text(transformed_text)  #Gemini  Prediction
     category = gemini_response["category"]
-    if not category or category == 'N/A':
-        category = "None"
+    if not category or category == 'N/A' or category == 'None':
+        category = "spam"
 
     # create a message to send on Whatsapp
     response_message = ""
@@ -201,7 +199,7 @@ def fetch_email():
     # Return JSON
     return json.dumps(emails_data, indent=4)  # Pretty-print JSON
 
-
+    
 
 # Route to get history of previously predicted mails
 @app.route("/history", methods=["GET"])
@@ -235,55 +233,6 @@ def clear_history():
     return jsonify({"message": "History cleared successfully"}), 200
     
 
-
-@app.route('/signup', methods=["POST"])
-def signup():
-    data = request.json
-    email = data.get("email")
-    password = data.get("password")
-    app_password = data.get("app_password")
-    if not email or not password or not app_password:
-        return jsonify({"error": "All fields are required"})
-    user_exists = False
-    if os.path.exists(USER_DATA_CSV):
-        with open(USER_DATA_CSV, mode="r", newline="") as file:
-            reader = csv.reader(file)
-            for row in reader:
-                if row and row[0] == email:  # Check if email already exists
-                    user_exists = True
-                    break
-    if user_exists:
-        return jsonify({"error": "user_exists"})
-    with open(USER_DATA_CSV, mode="a", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow([email, password, app_password])
-    return jsonify({"message": "success"})
-
-@app.route('/login', methods=["POST"])
-def login():
-    data = request.json
-    email = data.get("email")
-    password = data.get("password")
-    if not email or not password:
-        return jsonify({"message": "fill_all_fields"})
-    
-    user_found = False
-    user_data = None
-    if os.path.exists(USER_DATA_CSV):
-        with open(USER_DATA_CSV, mode="r", newline="") as file:
-            reader = csv.reader(file)
-            for row in reader:
-                if row and row[0] == email:
-                    user_found = True
-                    if row[1] == password:
-                        user_data = row
-                    break
-    if(user_data):
-        print(user_data)
-        return jsonify({"message":"success"})
-    if(user_found):
-        return jsonify({"message": "wrong_password"})
-    return jsonify({"message":"user_not_found"})
 
 if __name__ == "__main__":
     app.run(debug=True)

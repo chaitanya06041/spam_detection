@@ -1,1 +1,20 @@
 message,label,category
+"You won 6000 rs from a lottery … to claim your rewards send your bank
+details.
+",not spam,None
+"Collect your 1000 bonus from Pari Match,
+Start playing now for clamming your reward bonus !!
+",spam,None
+"You won 6000 rs from a lottery … to claim your rewards send your bank
+details.
+",not spam,spam
+"Hey [pratik naik],
+It’s been a while! How have you been? Let’s catch up this weekend—maybe
+grab some coffee? Let me know what works for you!
+Looking forward to it!
+[Kshitij pawar]
+",not spam,Personal
+"Hi [pratik naik],
+Here’s your weekly dose of the latest tech news, updates, and trends! This
+week, we cover AI advancements, cybersecurity tips, and more.
+",not spam,spam
